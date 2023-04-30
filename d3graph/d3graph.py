@@ -77,7 +77,7 @@ class d3graph:
 
     """
 
-    def __init__(self, collision: float = 0.5, charge: int = 450, slider: List[int] = None, verbose: int = 20) -> None:
+    def __init__(self, collision: float = 5, charge: int = 2000, slider: List[int] = None, verbose: int = 20) -> None:
         """Initialize d3graph."""
         if slider is None:
             slider = [None, None]
@@ -542,7 +542,7 @@ class d3graph:
         self.config['slider'] = [int(min_slider), int(max_slider)]
         logger.info('Slider range is set to [%g, %g]' % (self.config['slider'][0], self.config['slider'][1]))
 
-    def graph(self, source, target, weight, color: str = 'cluster', size = 10, scaler: str = 'zscore') -> None:
+    def graph(self, adjmat, color: str = 'cluster', size = 10, scaler: str = 'zscore') -> None:
         """Process the adjacency matrix and set all properties to default.
         Description
         -----------
@@ -593,7 +593,6 @@ class d3graph:
         None
 
         """
-        adjmat = vec2adjmat(source, target, weight=weight)
         # Clean readily fitted models to ensure correct results
         self._clean(clean_config=False)
         # Checks

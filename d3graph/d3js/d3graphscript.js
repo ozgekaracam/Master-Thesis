@@ -27,6 +27,9 @@ function d3graphscript(config = {
   function dragstarted(d) {
     d3.event.sourceEvent.stopPropagation();
     d3.select(this).classed("dragging", true);
+    //if (!d3.event.active) simulation.alphaTarget(500000).restart();
+    d.fx = d.x;
+    d.fy = d.y;
   }
 
   function dragged(d) {
@@ -35,6 +38,8 @@ function d3graphscript(config = {
 
   function dragended(d) {
     d3.select(this).classed("dragging", false);
+    d.fx = null;
+    d.fy = null;
   }
 
   var drag = force.drag()
@@ -198,6 +203,7 @@ function d3graphscript(config = {
 
 
   //Toggle stores whether the highlighting is on **********************
+  // TODO : check the links regarding to the treshold
   var toggle = 0;
   //Create an array logging what is connected to what
   var linkedByIndex = {};
