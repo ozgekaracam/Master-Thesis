@@ -54,6 +54,7 @@ function d3graphscript(config = {
   var svg = d3.select("body").append("svg")
     .attr("width", width)
     .attr("height", height)
+    .style("background-color", '#efefef')
     .call(d3.behavior.zoom().on("zoom", function () {
       svg.attr("transform", "translate(" + d3.event.translate + ")" + " scale(" + d3.event.scale + ")")
     }))
@@ -102,7 +103,7 @@ function d3graphscript(config = {
 
   // Text in nodes
   node.append("text")
-    .attr("dx", 10)
+    .attr("dx", function (d) { return d.node_size * 1.25; })
     .attr("dy", ".35em")
     .text(function(d) {return d.node_name}) // NODE-TEXT
     .style("font-size", function(d) {return d.node_fontsize + "px";}) // set font size equal to node edge size

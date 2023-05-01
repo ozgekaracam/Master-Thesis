@@ -266,7 +266,7 @@ class d3graph:
                             edge_size: Union[int, List[int]] = 1,
                             fontcolor: Union[str, List[str]] = 'node_color',
                             fontsize: Union[int, List[int]] = 12,
-                            cmap: str = 'Set1',
+                            cmap: str = 'tab20',
                             scaler: str = 'zscore',
                             minmax = [10, 50]):
         """Node properties.
