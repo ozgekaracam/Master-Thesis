@@ -257,6 +257,7 @@ class d3graph:
 
         logger.debug('Number of edges: %.0d', len(self.edge_properties.keys()))
 
+# TODO: Define the color map: cmap = matplotlib.colors.ListedColormap(['dodgerblue', 'lightgray', 'darkorange'])
     def set_node_properties(self,
                             label: List[str] = None,
                             tooltip: List[str] = None,

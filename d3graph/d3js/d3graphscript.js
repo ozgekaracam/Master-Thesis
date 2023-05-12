@@ -21,6 +21,7 @@ function d3graphscript(config = {
   var force = d3.layout.force()
     .charge(config.charge)
     .linkDistance((d) => config.distance > 0 ? config.distance : d.edge_weight)
+    //.center(d3.forceCenter(width / 2, height / 2))
     .size([width, height]);
 
   // DRAGGING START
