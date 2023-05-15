@@ -23,7 +23,7 @@ from io import StringIO
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.model_selection import train_test_split
 from sklearn.svm import LinearSVC
-
+from urllib.request import urlopen
 
 
 import numpy as np
@@ -101,9 +101,8 @@ def create_corpus(df,  concern: bool = False, app: bool = False):
             app_list.append(row["aapp_name"])
     corpus_list = df["clean_content"].tolist()
     return corpus_list
-#Instantiate Stemmer
-stemmer = PorterStemmer()
-def word_stemmer(text):
+
+def word_stemmer(stemmer, text):
     stem_text = [stemmer.stem(i) for i in text]
     return stem_text
 def get_part_of_speech(word):
@@ -116,10 +115,7 @@ def get_part_of_speech(word):
 
     most_likely_part_of_speech = pos_counts.most_common(1)[0][0]
     return most_likely_part_of_speech
-
-# Instantiate lemmatizer
-lemmatizer = WordNetLemmatizer()
-def word_lemmatizer(text):
+def word_lemmatizer(lemmatizer, text):
     lem_text = [lemmatizer.lemmatize(i, get_part_of_speech(i)) for i in text]
     return lem_text
 
@@ -127,10 +123,16 @@ def removeNumber(text):
     return ' '.join(re.sub(r'[0-9]',' ', text).split())
 def deEmojify(text):
     return text.encode('ascii', 'ignore').decode('ascii')
-#TODO: remove punctutiton after stop words!!!  all the apps or none , another list: smart - nltk
-stpwrd = nltk.corpus.stopwords.words('english')
-new_stopwords = ["people", "app", "im", "it", "me"]
-stpwrd.extend(new_stopwords)
+def generate_stopwords():
+    # http://www.ai.mit.edu/projects/jmlr/papers/volume5/lewis04a/a11-smart-stop-list/english.stop
+    # stpwrd = nltk.corpus.stopwords.words('english')
+    target_url = "http://www.ai.mit.edu/projects/jmlr/papers/volume5/lewis04a/a11-smart-stop-list/english.stop"
+    response = urlopen(target_url)
+    stpwrd = response.read().decode('utf-8').replace("\n", " ").split()
+    new_stopwords = ["people", "app", "im", "it", "me"]
+    stpwrd.extend(new_stopwords)
+    return stpwrd
+stpwrd = generate_stopwords()
 def remove_stopwords(text):
     text = text.split(" ")
     words = [w for w in text if w not in stpwrd]
@@ -157,10 +159,11 @@ def preprocess(content): #res -> clean_content
     tokenizer = RegexpTokenizer(r'\w+|\$[\d\.]+|\S+')
     clean_content = tokenizer.tokenize(clean_content)
     # lemmatizer
-    clean_content = word_lemmatizer(clean_content)
+    lemmatizer = WordNetLemmatizer()
+    clean_content = word_lemmatizer(lemmatizer, clean_content)
     # stemmer
-    #clean_content = word_stemmer(clean_content)
-
+    #stemmer = PorterStemmer()
+    #clean_content = word_stemmer(stemmer, clean_content)
     return ' '.join(clean_content)
 def prepare_data(dataset):
 #prepare_data(df, stemmer='lan', spellcheck=False):
