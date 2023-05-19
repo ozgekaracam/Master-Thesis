@@ -191,7 +191,7 @@ def clean_no_concern(dataset):
     top_list = df_count[df_count['counts'] > 50]['aacat1']
     top_list = top_list.to_list()
     dataset = dataset.query("aacat1  in @top_list")
-    dataset.groupby('aacat1').clean_content.count()
+    print(dataset.groupby('aacat1').clean_content.count())
     return dataset
 def vectorizer(df):
     tfidf = TfidfVectorizer(sublinear_tf=True, min_df=5, norm='l2', encoding='latin-1', ngram_range=(1, 2))
