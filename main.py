@@ -72,7 +72,7 @@ def encode_onehot(corpus_list):
 # Apriori algorithm
 def apriori_algo(corpus_list):
     start_time = time.time()
-    frequent_itemsets = apriori(encode_onehot(corpus_list), min_support=0.003, use_colnames=True)
+    frequent_itemsets = apriori(encode_onehot(corpus_list), min_support=0.003, use_colnames=True, low_memory=True)
     print("---Runtime Apriori: %s seconds ---" % (time.time() - start_time))
     #API: apriori(df, min_support=0.5, use_colnames=False, max_len=None, verbose=0, low_memory=False)
     frequent_itemsets['length'] = frequent_itemsets['itemsets'].apply(lambda x: len(x))
@@ -232,6 +232,6 @@ if __name__ == '__main__':
     predict_dataset = add_predict(dataset, y_pred)
     corpus_list = create_corpus(predict_dataset, concern=True, app=True)
     apriori_rules = apriori_algo(corpus_list)
-    fpgrowth_rules = fpgrowth_algo(corpus_list)
+    #fpgrowth_rules = fpgrowth_algo(corpus_list)
     visualize_graph(apriori_rules)
 # See PyCharm help at https://www.jetbrains.com/help/pycharm/
