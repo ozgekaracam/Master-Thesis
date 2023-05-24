@@ -28,7 +28,7 @@ from urllib.request import urlopen
 
 import numpy as np
 
-def visualize_graph(apriori_rules):
+def visualize_graph(rules):
     # Initialize
     d3 = d3graph()
 
@@ -36,7 +36,7 @@ def visualize_graph(apriori_rules):
     #d3.d3graph(df, showfig=False)
     #d3.D3graph.set_node_properties(color='cluster')
 
-    adjmat = vec2adjmat(apriori_rules['antecedents'], apriori_rules['consequents'], weight=apriori_rules['lift'])
+    adjmat = vec2adjmat(rules['antecedents'], rules['consequents'], weight=rules['lift'])
     d3.graph(adjmat)
     size = []
     d3.set_edge_properties(directed=True)
@@ -59,9 +59,17 @@ def generate_rules(frequent_itemsets):
     #rules = rules[rules['antecedent support'] > 0.01]
     # Set maximum consequent support
     #rules = rules[apriori_rules['consequent support'] < 0.1]
-    #rules = rules[rules['confidence'] > 0.001]
+    # Set min confidence for rules
+    #rules = rules[rules['confidence'] > 0.01]
+
+    # Have 2 words on node
+    #rules["antecedents"] = rules["antecedents"].apply(lambda x: ', '.join(list(x))).astype("unicode")
+    #rules["consequents"] = rules["consequents"].apply(lambda x: ', '.join(list(x))).astype("unicode")
+
+    # Only get the first word of the antecedents and consequents itemset
     rules.antecedents = rules.antecedents.apply(lambda x: next(iter(x)))
     rules.consequents = rules.consequents.apply(lambda x: next(iter(x)))
+
     return rules
 # One-hot encoder
 def encode_onehot(corpus_list):
@@ -72,6 +80,7 @@ def encode_onehot(corpus_list):
 # Apriori algorithm
 def apriori_algo(corpus_list):
     start_time = time.time()
+    # Set max_len = 2 for only top rules
     frequent_itemsets = apriori(encode_onehot(corpus_list), min_support=0.003, use_colnames=True, low_memory=True)
     print("---Runtime Apriori: %s seconds ---" % (time.time() - start_time))
     #API: apriori(df, min_support=0.5, use_colnames=False, max_len=None, verbose=0, low_memory=False)
