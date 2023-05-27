@@ -146,7 +146,8 @@ def generate_stopwords():
     target_url = "http://www.ai.mit.edu/projects/jmlr/papers/volume5/lewis04a/a11-smart-stop-list/english.stop"
     response = urlopen(target_url)
     stpwrd = response.read().decode('utf-8').replace("\n", " ").split()
-    new_stopwords = ["people", "app", "im", "it", "me"]
+    # why to remove "people" ?
+    new_stopwords = ["im", "dont", "app", "alexa", "facebook", "googlehome", "instagram", "linkedin", "tiktok", "tik", "tok", "uber"]
     stpwrd.extend(new_stopwords)
     return stpwrd
 stpwrd = generate_stopwords()
@@ -168,6 +169,8 @@ def preprocess(content): #res -> clean_content
     clean_content = remove_stopwords(clean_content)
     # removePunc
     clean_content = removePunctuation(clean_content)
+    # remove stop words
+    clean_content = remove_stopwords(clean_content)
     # removeEmojis
     clean_content = deEmojify(clean_content)
     # removeNumber
@@ -202,7 +205,8 @@ def factorize_concern(dataset):
     return dataset, concern_id_df, concern_to_id, id_to_concern
 def clean_no_concern(dataset):
     df = dataset[pd.notnull(dataset['clean_content'])]
-    df = df.query("aacat1 not in ['Noise', 'Other', 'none']")
+    # 'Noise'
+    df = df.query("aacat1 not in ['Other', 'none']")
     # get a function here to define top
     df_count = df.groupby('aacat1').clean_content.count().reset_index(name='counts')
     top_list = df_count[df_count['counts'] > 50]['aacat1']
@@ -226,6 +230,7 @@ def run_models(dataset,features, labels):
 def add_predict(df, predictions):
     df['predicted_id'] = predictions
     df['predicted'] = [id_to_concern[x] for x in df['predicted_id']]
+    df = df.query("predicted not in ['Noise']")
     return df
 if __name__ == '__main__':
     file = "final_annotations.csv"
