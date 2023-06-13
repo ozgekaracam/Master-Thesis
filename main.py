@@ -65,9 +65,10 @@ def zhangs_rule(rules):
     return zhang_metric
 # Generate rules
 def generate_rules(frequent_itemsets):
-    rules = association_rules(frequent_itemsets, metric='lift', min_threshold=4.00)
+    rules = association_rules(frequent_itemsets, metric='lift', min_threshold=5.00)
     rules['zhang'] = zhangs_rule(rules)
-    filtered_rules = rules[rules['zhang'] > 0.2]
+    filtered_rules = rules
+    # [rules['zhang'] > 0.2]
     filtered_rules.sort_values('confidence', ascending=False, inplace=True)
     # Set minimum antecedent support
     #rules = rules[rules['antecedent support'] > 0.01]
@@ -163,10 +164,11 @@ def word_stemmer(stemmer, text):
 def get_part_of_speech(word):
     probable_part_of_speech = wordnet.synsets(word)
     pos_counts = Counter()
-    pos_counts["n"] = len([item for item in probable_part_of_speech if item.pos() == "n"])
+    #pos_counts["n"] = len([item for item in probable_part_of_speech if item.pos() == "n"])
     pos_counts["v"] = len([item for item in probable_part_of_speech if item.pos() == "v"])
     pos_counts["a"] = len([item for item in probable_part_of_speech if item.pos() == "a"])
-    pos_counts["r"] = len([item for item in probable_part_of_speech if item.pos() == "r"])
+    #pos_counts["n"] = len([item for item in probable_part_of_speech if item.pos() == "n"])
+    #pos_counts["r"] = len([item for item in probable_part_of_speech if item.pos() == "r"])
 
     most_likely_part_of_speech = pos_counts.most_common(1)[0][0]
     return most_likely_part_of_speech
@@ -200,23 +202,32 @@ def removeLink(text):
     no_link = ' '.join(re.sub("(w+://S+)", " ", text).split())
     return no_link
 def preprocess(content): #res -> clean_content
-    clean_content = content.lower()
     # removeLinks
-    clean_content = removeLink(clean_content)
-    # remove stop words
-    clean_content = remove_stopwords(clean_content)
-    # removePunc
-    clean_content = removePunctuation(clean_content)
-    # removeEmojis
-    clean_content = deEmojify(clean_content)
+    clean_content = removeLink(content)
+    print(clean_content)
     # removeNumber
     clean_content = removeNumber(clean_content)
+    print(clean_content)
+    # removeEmojis
+    clean_content = deEmojify(clean_content)
+    print(clean_content)
+    # remove stop words
+    clean_content = remove_stopwords(clean_content.lower())
+    print(clean_content)
+    # removePunc
+    clean_content = removePunctuation(clean_content)
+    print(clean_content)
+    # remove stop words
+    clean_content = remove_stopwords(clean_content)
+    print(clean_content)
     # tokenizer
     tokenizer = RegexpTokenizer(r'\w+|\$[\d\.]+|\S+')
     clean_content = tokenizer.tokenize(clean_content)
+    print(clean_content)
     # lemmatizer
     lemmatizer = WordNetLemmatizer()
     clean_content = word_lemmatizer(lemmatizer, clean_content)
+    print(clean_content)
     # stemmer
     #stemmer = PorterStemmer()
     #clean_content = word_stemmer(stemmer, clean_content)
