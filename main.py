@@ -25,6 +25,8 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.model_selection import train_test_split
 from sklearn.svm import LinearSVC
 from urllib.request import urlopen
+from sklearn.ensemble import RandomForestClassifier
+
 import seaborn as sns
 
 
@@ -140,21 +142,28 @@ def calculate_support(corpus_df):
     plt.show()
 app_list = []
 concern_list = []
+def clean_concern_field(df):
+    df = df[pd.notnull(dataset['predicted'])]
+    df['predicted_clean'] = df['predicted'].apply(lambda x: x.lower())
+    df['predicted_clean'] = df['predicted_clean'].str.extract(r'^(.*?)\(', expand=True)
+    df['predicted_clean'].fillna(df['predicted'], inplace=True)
+    df['predicted_clean'] = df['predicted_clean'].str.strip()
+    df['predicted'] = df['predicted_clean']
+    return df
 # Create corpus list
 def create_corpus(df,  concern: bool = False, app: bool = False):
-    #df = dataset.query("aacat1 not in ['Noise', 'none']")
+    #df = dataset.query("cat1 not in ['Noise', 'none']")
     df['clean_content'] = df.clean_content.apply(lambda x: x.split(' '))
-    # df['aacat1'].unique()
-    #cleanContent = df['clean_content']
+    df = clean_concern_field(df)
     if concern:
         for index, row in df.iterrows():
-            if row["predicted"] != "none":
+            if row["predicted"] != "Noise":
                 row["clean_content"].append(row["predicted"])
                 if row["predicted"] not in concern_list: concern_list.append(row["predicted"])
     if app:
         for index, row in df.iterrows():
-            row["clean_content"].append(row["aapp_name"])
-            app_list.append(row["aapp_name"])
+            row["clean_content"].append(row["app_name"])
+            app_list.append(row["app_name"])
     corpus_list = df["clean_content"].tolist()
     return corpus_list
 
@@ -245,42 +254,59 @@ def get_data(file):
     return data
 # Press the green button in the gutter to run the script.
 def factorize_concern(dataset):
-    dataset['aacat1_id'] = dataset['aacat1'].factorize()[0]
-    concern_id_df = dataset[['aacat1', 'aacat1_id']].drop_duplicates().sort_values('aacat1_id')
+    dataset['cat1_id'] = dataset['cat1'].factorize()[0]
+    concern_id_df = dataset[['cat1', 'cat1_id']].drop_duplicates().sort_values('cat1_id')
     concern_to_id = dict(concern_id_df.values)
-    id_to_concern = dict(concern_id_df[['aacat1_id', 'aacat1']].values)
+    id_to_concern = dict(concern_id_df[['cat1_id', 'cat1']].values)
     return dataset, concern_id_df, concern_to_id, id_to_concern
 def clean_no_concern(dataset):
     df = dataset[pd.notnull(dataset['clean_content'])]
     # 'Noise'
-    df = df.query("aacat1 not in ['Other', 'none']")
+    df = df.query("cat1 not in ['Other', 'none']")
     # get a function here to define top
-    df_count = df.groupby('aacat1').clean_content.count().reset_index(name='counts')
-    top_list = df_count[df_count['counts'] > 50]['aacat1']
+    df_count = df.groupby('cat1').clean_content.count().reset_index(name='counts')
+    top_list = df_count[df_count['counts'] > 50]['cat1']
     top_list = top_list.to_list()
-    dataset = dataset.query("aacat1  in @top_list")
-    #print(dataset.groupby('aacat1').clean_content.count())
+    dataset = dataset.query("cat1  in @top_list")
+    #print(dataset.groupby('cat1').clean_content.count())
     return dataset
 def vectorizer(df):
     tfidf = TfidfVectorizer(sublinear_tf=True, min_df=5, norm='l2', encoding='latin-1', ngram_range=(1, 2))
     features = tfidf.fit_transform(df.clean_content).toarray()
-    labels = df.aacat1_id
+    labels = df.cat1_id
     print("features: ", features.shape)
     return features, labels
 def run_models(dataset,features, labels):
-    modelSVC = LinearSVC()
+    modelRF = RandomForestClassifier(random_state=1,
+                              bootstrap=False,
+                              max_depth=150,
+                              max_features='log2',
+                              min_samples_leaf=1,
+                              min_samples_split=0.0015,
+#                               min_samples_split=0.475,
+                              n_estimators=200)
     X_train, X_test, y_train, y_test, indices_train, indices_test = train_test_split(features, labels, dataset.index,
                                                                                      test_size=0.33, random_state=0)
-    modelSVC.fit(X_train, y_train)
-    y_pred = modelSVC.predict(features)
-    return y_pred
+
+    modelRF.fit(X_train, y_train)
+    y_pred = modelRF.predict(X_test)
+    print(indices_test)
+    print(y_pred)
+    for ind, pred in zip(indices_test, y_pred):
+        dataset.at[ind, "predicted"] = id_to_concern[int(pred)]
+
+    #predict_dataset = add_predict(dataset, y_pred)
+
+    wrong_predictions = dataset[dataset['predicted'] != dataset['cat1']]
+    print(wrong_predictions[['clean_content','cat1', 'predicted']])
+    return dataset
 def add_predict(df, predictions):
     df['predicted_id'] = predictions
     df['predicted'] = [id_to_concern[x] for x in df['predicted_id']]
     df = df.query("predicted not in ['Noise']")
     return df
 if __name__ == '__main__':
-    file = "final_annotations.csv"
+    file = "gps_reannotation-full.csv"
     # prepare the data
     print("preprocessing data...")
     dataset = prepare_data(get_data(file))
@@ -289,8 +315,7 @@ if __name__ == '__main__':
     dataset, concern_id_df, concern_to_id, id_to_concern = factorize_concern(dataset)
     dataset = clean_no_concern(dataset)
     features, labels = vectorizer(dataset)
-    y_pred = run_models(dataset, features, labels)
-    predict_dataset = add_predict(dataset, y_pred)
+    predict_dataset = run_models(dataset, features, labels)
     corpus_list = create_corpus(predict_dataset, concern=True, app=True)
     apriori_rules = apriori_algo(corpus_list)
     #fpgrowth_rules = fpgrowth_algo(corpus_list)
